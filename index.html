@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <title>Speech to Text</title>
+	</head>
+
+	<body>
+        <script>
+		    async function SpeechToText() {
+		        var output = document.getElementById("output");
+		        var step = document.getElementById("steps");
+
+                var SpeechRecognition = window.SpeechRecognition || webkitSpeechRecognition;
+                var recognition = new SpeechRecognition();
+                recognition.lang = "ar";
+
+
+                recognition.addEventListener('start', function() {
+                    step.innerHTML = "Please speak...";
+                });
+
+                recognition.addEventListener('speechend', function() {
+                    step.innerHTML = "stopped listening";
+                    recognition.stop();
+                });
+
+                recognition.addEventListener('result', function(event) {
+                    var transcript = event.results[0][0].transcript;
+                    transcript.trim();
+                    WriteToSerial();
+                    output.innerHTML = transcript;
+                    output.classList.remove("hide");
+                });
+    
+                 recognition.start();
+	        }
+
+            let port;
+            let writer;
+
+            async function connect(){
+                const filters = [
+                { usbVendorId: 0x2341, usbProductId: 0x0043 },
+                { usbVendorId: 0x2341, usbProductId: 0x0001 }
+                ];
+                port = await navigator.serial.requestPort({ filters });
+                await port.open({ baudRate: 9600 });
+                writer = port.writable.getWriter();
+            }
+
+            async function WriteToSerial(){
+                const textEncoder = new TextEncoder();
+                await writer.write(textEncoder.encode(transcript));
+            }
+
+		</script>
+
+        <div align ="center">
+            <br>
+            <br>
+            <br>
+            <br>
+            <button onclick="connect()">Connect</button>
+            <br>
+            <br>
+            <button type="button" onclick="SpeechToText()">Speech to Text</button>
+            <p id = "steps"> Click on the button and speak</p>
+            <div id = "output" class="hide"></div>
+        </div>
+	</body>
+</html>
